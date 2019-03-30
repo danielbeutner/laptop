@@ -1,8 +1,5 @@
 #!/bin/sh
-
-# Welcome to the thoughtbot laptop script!
-# Be prepared to turn your laptop (or desktop, no haters here)
-# into an awesome development machine.
+# Be prepared to turn your box into an awesome development machine.
 
 fancy_echo() {
   local fmt="$1"; shift
@@ -102,41 +99,19 @@ if ! command -v brew >/dev/null; then
     export PATH="/usr/local/bin:$PATH"
 fi
 
-if brew list | grep -Fq brew-cask; then
-  fancy_echo "Uninstalling old Homebrew-Cask ..."
-  brew uninstall --force brew-cask
-fi
-
 fancy_echo "Updating Homebrew formulae ..."
 brew update --force # https://github.com/Homebrew/brew/issues/1151
 brew bundle --file=- <<EOF
-tap "thoughtbot/formulae"
 tap "homebrew/services"
-tap "universal-ctags/universal-ctags"
-tap "caskroom/cask"
-tap "heroku/brew"
+tap "homebrew/cask"
 
 # Unix
-brew "universal-ctags", args: ["HEAD"]
 brew "git"
 brew "openssl"
-brew "rcm"
-brew "reattach-to-user-namespace"
 brew "the_silver_searcher"
-brew "tmux"
 brew "vim"
 brew "watchman"
 brew "zsh"
-
-# Heroku
-brew "heroku/brew/heroku"
-brew "parity"
-
-# GitHub
-brew "hub"
-
-# Image manipulation
-brew "imagemagick"
 
 # Programming language prerequisites and package managers
 brew "libyaml" # should come after openssl
@@ -144,14 +119,14 @@ brew "coreutils"
 brew "yarn"
 cask "gpg-suite"
 
-# Databases
-brew "postgres", restart_service: :changed
-brew "redis", restart_service: :changed
+# Appstore cli
+brew "mas"
 EOF
 
-fancy_echo "Update heroku binary ..."
-brew unlink heroku
-brew link --force heroku
+fancy_echo "Installing oh-my-zsh..."
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+fi
 
 fancy_echo "Configuring asdf version manager ..."
 if [ ! -d "$HOME/.asdf" ]; then
@@ -198,8 +173,8 @@ fancy_echo "Installing latest Node ..."
 bash "$HOME/.asdf/plugins/nodejs/bin/import-release-team-keyring"
 install_asdf_language "nodejs"
 
-if [ -f "$HOME/.laptop.local" ]; then
-  fancy_echo "Running your customizations from ~/.laptop.local ..."
+if [ -f "$HOME/.machine.local" ]; then
+  fancy_echo "Running your customizations from ~/.machine.local ..."
   # shellcheck disable=SC1090
-  . "$HOME/.laptop.local"
+  . "$HOME/.machine.local"
 fi
