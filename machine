@@ -4,7 +4,6 @@
 fancy_echo() {
   local fmt="$1"; shift
 
-  # shellcheck disable=SC2059
   printf "\\n$fmt\\n" "$@"
 }
 
@@ -27,7 +26,6 @@ append_to_zshrc() {
   fi
 }
 
-# shellcheck disable=SC2154
 trap 'ret=$?; test $ret -ne 0 && printf "failed\n\n" >&2; exit $ret' EXIT
 
 set -e
@@ -40,7 +38,6 @@ if [ ! -f "$HOME/.zshrc" ]; then
   touch "$HOME/.zshrc"
 fi
 
-# shellcheck disable=SC2016
 append_to_zshrc 'export PATH="$HOME/.bin:$PATH"'
 
 HOMEBREW_PREFIX="/usr/local"
@@ -93,40 +90,105 @@ if ! command -v brew >/dev/null; then
 
     append_to_zshrc '# recommended by brew doctor'
 
-    # shellcheck disable=SC2016
     append_to_zshrc 'export PATH="/usr/local/bin:$PATH"' 1
 
     export PATH="/usr/local/bin:$PATH"
 fi
 
 fancy_echo "Updating Homebrew formulae ..."
+brew bundle dump
 brew update --force # https://github.com/Homebrew/brew/issues/1151
 brew bundle --file=- <<EOF
 tap "homebrew/services"
 tap "homebrew/cask"
+tap "caskroom/cask"
 
 # Unix
 brew "git"
+brew "git-flow-avh"
 brew "openssl"
 brew "the_silver_searcher"
 brew "vim"
 brew "watchman"
 brew "zsh"
+brew "antigen"
 
 # Programming language prerequisites and package managers
+brew "automake"
+brew "autoconf"
 brew "libyaml" # should come after openssl
+brew "readline"
+brew "libxslt"
+brew "libtool"
+brew "unixodbc"
 brew "coreutils"
 brew "yarn"
-cask "gpg-suite"
+brew "freetype"
+brew "bison"
+brew "bison27"
+brew "gettext"
+brew "icu4c"
+brew "jpeg"
+brew "libiconv"
+brew "libpng"
+brew "zlib"
+brew "xquartz"
 
-# Appstore cli
+# antigen
+brew "antigen"
+
+# Appstore
 brew "mas"
+
+# Some essential tools
+cask "gpg-suite"
+cask "iterm2"
+cask "docker"
+
+# Applications
+cask "docker"
+cask "alfred"
+cask "google-chrome"
+cask "firefox"
+cask "visual-studio-code"
+cask "microsoft-office"
+cask "slack"
+cask "virtualbox"
+cask "spotify"
+cask "skype"
+cask "spectacle"
+cask "graphql-playground"
+cask 'sequel-pro'
+cask 'kaleidoscope'
+cask 'postman'
+cask 'kap'
+
+mas 'Slack', id: 803453959
+mas 'Sip', id: 507257563
+mas 'Affinity Photo', id: 824183456
+mas 'Affinity Designer', id: 824171161
+mas 'Enpass', id: 732710998
+mas 'Twitter', id: 409789998
+mas 'Amphetamine', id: 937984704
+mas 'Pocket', id: 568494494
 EOF
 
-fancy_echo "Installing oh-my-zsh..."
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
-fi
+fancy_echo "Setting up zsh..."
+append_to_zshrc '# Libs'
+append_to_zshrc 'antigen bundle robbyrussell/oh-my-zsh lib/'
+append_to_zshrc '# Theme'
+append_to_zshrc 'antigen theme caiogondim/bullet-train.zsh bullet-train'
+append_to_zshrc '# Plugins'
+append_to_zshrc 'antigen bundle git'
+append_to_zshrc 'antigen bundle zsh-users/zsh-syntax-highlighting'``
+append_to_zshrc 'antigen bundle ssh-agent'
+append_to_zshrc 'antigen bundle node'
+append_to_zshrc 'antigen bundle npm'
+append_to_zshrc 'antigen bundle npx'
+append_to_zshrc 'antigen bundle brew'
+append_to_zshrc 'antigen bundle brew-cask'
+append_to_zshrc 'antigen bundle gem'
+append_to_zshrc 'antigen bundle osx'
 
 fancy_echo "Configuring asdf version manager ..."
 if [ ! -d "$HOME/.asdf" ]; then
@@ -134,7 +196,6 @@ if [ ! -d "$HOME/.asdf" ]; then
   append_to_zshrc "source $HOME/.asdf/asdf.sh" 1
 fi
 
-alias install_asdf_plugin=add_or_update_asdf_plugin
 add_or_update_asdf_plugin() {
   local name="$1"
   local url="$2"
@@ -146,10 +207,10 @@ add_or_update_asdf_plugin() {
   fi
 }
 
-# shellcheck disable=SC1090
 source "$HOME/.asdf/asdf.sh"
 add_or_update_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
 add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
+add_or_update_asdf_plugin "php" "https://github.com/odarriba/asdf-php.git"
 
 install_asdf_language() {
   local language="$1"
@@ -173,8 +234,34 @@ fancy_echo "Installing latest Node ..."
 bash "$HOME/.asdf/plugins/nodejs/bin/import-release-team-keyring"
 install_asdf_language "nodejs"
 
-if [ -f "$HOME/.machine.local" ]; then
-  fancy_echo "Running your customizations from ~/.machine.local ..."
-  # shellcheck disable=SC1090
-  . "$HOME/.machine.local"
+fancy_echo "Installing latest PHP ..."
+install_asdf_language "php"
+
+fancy_echo "Setting up macOS ..."
+chflags nohidden ~/Library
+defaults write com.apple.finder AppleShowAllFiles YES
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder ShowStatusBar -bool true
+sudo spctl --master-disable
+
+fancy_echo "Installing extensions for Code ..."
+if command -v code >/dev/null; then then
+  code --install-extension coenraads.bracket-pair-colorizer
+  code --install-extension eamodio.gitlens
+  code --install-extension editorconfig.editorconfig
+  code --install-extension ibm.output-colorizer
+  code --install-extension mikestead.dotenv
+  code --install-extension pkief.material-icon-theme
+  code --install-extension sdras.night-owl
+  code --install-extension shan.code-settings-sync
 fi
+
+
+# if [ -f "$HOME/.machine.local" ]; then
+#   fancy_echo "Running your customizations from ~/.machine.local ..."
+#   . "$HOME/.machine.local"
+# fi
+
+fancy_echo "Cleaning up old Homebrew formulae ..."
+brew cleanup
+brew cask cleanup
