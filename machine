@@ -96,43 +96,46 @@ if ! command -v brew >/dev/null; then
 fi
 
 fancy_echo "Updating Homebrew formulae ..."
-brew bundle dump
 brew update --force # https://github.com/Homebrew/brew/issues/1151
 brew bundle --file=- <<EOF
 tap "homebrew/services"
 tap "homebrew/cask"
-tap "caskroom/cask"
+tap "homebrew/cask-fonts"
+tap "universal-ctags/universal-ctags"
 
 # Unix
+brew "universal-ctags", args: ["HEAD"]
+brew "antigen"
+brew "bash" # macos has an very old version of bash
 brew "git"
 brew "git-flow-avh"
 brew "openssl"
+brew "openssh"
 brew "the_silver_searcher"
 brew "vim"
 brew "watchman"
 brew "zsh"
-brew "antigen"
 
 # Programming language prerequisites and package managers
-brew "automake"
 brew "autoconf"
-brew "libyaml" # should come after openssl
-brew "readline"
-brew "libxslt"
-brew "libtool"
-brew "unixodbc"
-brew "coreutils"
-brew "yarn"
-brew "freetype"
+brew "automake"
 brew "bison"
 brew "bison27"
+brew "coreutils"
+brew "freetype"
 brew "gettext"
 brew "icu4c"
 brew "jpeg"
 brew "libiconv"
 brew "libpng"
+brew "libtool"
+brew "libxslt"
+brew "libyaml" # should come after openssl
+brew "readline"
+brew "libedit"
+brew "unixodbc"
+brew "yarn"
 brew "zlib"
-brew "xquartz"
 
 # antigen
 brew "antigen"
@@ -140,44 +143,14 @@ brew "antigen"
 # Appstore
 brew "mas"
 
-# Some essential tools
-cask "gpg-suite"
-cask "iterm2"
-cask "docker"
-
-# Applications
-cask "docker"
-cask "alfred"
-cask "google-chrome"
-cask "firefox"
-cask "visual-studio-code"
-cask "microsoft-office"
-cask "slack"
-cask "virtualbox"
-cask "spotify"
-cask "skype"
-cask "spectacle"
-cask "graphql-playground"
-cask 'sequel-pro'
-cask 'kaleidoscope'
-cask 'postman'
-cask 'kap'
-
-mas 'Slack', id: 803453959
-mas 'Sip', id: 507257563
-mas 'Affinity Photo', id: 824183456
-mas 'Affinity Designer', id: 824171161
-mas 'Enpass', id: 732710998
-mas 'Twitter', id: 409789998
-mas 'Amphetamine', id: 937984704
-mas 'Pocket', id: 568494494
+# Font with ligatures and for powerline
+cask "font-fira-code"
 EOF
 
 fancy_echo "Setting up zsh..."
+append_to_zshrc 'source /usr/local/share/antigen/antigen.zsh'
 append_to_zshrc '# Libs'
-append_to_zshrc 'antigen bundle robbyrussell/oh-my-zsh lib/'
-append_to_zshrc '# Theme'
-append_to_zshrc 'antigen theme caiogondim/bullet-train.zsh bullet-train'
+append_to_zshrc 'antigen use oh-my-zsh'
 append_to_zshrc '# Plugins'
 append_to_zshrc 'antigen bundle git'
 append_to_zshrc 'antigen bundle zsh-users/zsh-syntax-highlighting'``
@@ -189,6 +162,9 @@ append_to_zshrc 'antigen bundle brew'
 append_to_zshrc 'antigen bundle brew-cask'
 append_to_zshrc 'antigen bundle gem'
 append_to_zshrc 'antigen bundle osx'
+append_to_zshrc '# Theme'  
+append_to_zshrc 'antigen theme caiogondim/bullet-train.zsh bullet-train'
+append_to_zshrc 'antigen apply'
 
 fancy_echo "Configuring asdf version manager ..."
 if [ ! -d "$HOME/.asdf" ]; then
@@ -210,7 +186,7 @@ add_or_update_asdf_plugin() {
 source "$HOME/.asdf/asdf.sh"
 add_or_update_asdf_plugin "ruby" "https://github.com/asdf-vm/asdf-ruby.git"
 add_or_update_asdf_plugin "nodejs" "https://github.com/asdf-vm/asdf-nodejs.git"
-add_or_update_asdf_plugin "php" "https://github.com/odarriba/asdf-php.git"
+# add_or_update_asdf_plugin "php" "https://github.com/odarriba/asdf-php.git"
 
 install_asdf_language() {
   local language="$1"
@@ -234,34 +210,20 @@ fancy_echo "Installing latest Node ..."
 bash "$HOME/.asdf/plugins/nodejs/bin/import-release-team-keyring"
 install_asdf_language "nodejs"
 
-fancy_echo "Installing latest PHP ..."
-install_asdf_language "php"
+# fancy_echo "Installing latest PHP ..."
+# export PATH="$(brew --prefix bison)/bin:$(brew --prefix icu4c)/bin:$(brew --prefix icu4c)/sbin:$PATH" PHP_CONFIGURE_OPTIONS="--with-iconv=$(brew --prefix libiconv) --with-openssl=$(brew --prefix openssl) --with-zlib-dir=$(brew --prefix zlib)"
+# install_asdf_language "php"
 
-fancy_echo "Setting up macOS ..."
-chflags nohidden ~/Library
-defaults write com.apple.finder AppleShowAllFiles YES
-defaults write com.apple.finder ShowPathbar -bool true
-defaults write com.apple.finder ShowStatusBar -bool true
-sudo spctl --master-disable
-
-fancy_echo "Installing extensions for Code ..."
-if command -v code >/dev/null; then then
-  code --install-extension coenraads.bracket-pair-colorizer
-  code --install-extension eamodio.gitlens
-  code --install-extension editorconfig.editorconfig
-  code --install-extension ibm.output-colorizer
-  code --install-extension mikestead.dotenv
-  code --install-extension pkief.material-icon-theme
-  code --install-extension sdras.night-owl
-  code --install-extension shan.code-settings-sync
+# Settings for macos
+if [ -f "./.machine.macos" ]; then
+  fancy_echo "Set macos settings from ~/.machine.macos ..."
+  . "./.machine.macos"
 fi
 
-
-# if [ -f "$HOME/.machine.local" ]; then
-#   fancy_echo "Running your customizations from ~/.machine.local ..."
-#   . "$HOME/.machine.local"
+# if [ -f "./.machine.apps" ]; then
+#   fancy_echo "Installing apps from ~/.machine.apps ..."
+#   . "./.machine.apps"
 # fi
 
 fancy_echo "Cleaning up old Homebrew formulae ..."
 brew cleanup
-brew cask cleanup
