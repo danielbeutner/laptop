@@ -226,10 +226,10 @@ if [ -f "./.machine.macos" ]; then
   . "./.machine.macos"
 fi
 
-# if [ -f "./.machine.apps" ]; then
-#   fancy_echo "Installing apps from ~/.machine.apps ..."
-#   . "./.machine.apps"
-# fi
+if [ -f "./.machine.apps" ]; then
+  fancy_echo "Installing apps from ~/.machine.apps ..."
+  . "./.machine.apps"
+fi
 
 fancy_echo "Cleaning up old Homebrew formulae ..."
 brew cleanup
