@@ -143,6 +143,12 @@ brew "antigen"
 # Appstore
 brew "mas"
 
+# Some tools
+cask "docker"
+cask "gpg-suite"
+cask "iterm2"
+cask "xquartz"
+
 # Font with ligatures and for powerline
 cask "font-fira-code"
 EOF

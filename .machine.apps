@@ -1,9 +1,4 @@
 brew bundle --file=- <<EOF
-# Some tools
-cask "docker"
-cask "gpg-suite"
-cask "iterm2"
-cask "xquartz"
 
 # Applications
 cask "docker"
